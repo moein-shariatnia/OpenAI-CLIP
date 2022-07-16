@@ -1,3 +1,23 @@
+## Update (July 2022)
+I am happy to find out that this code has been used and cited in the **ICLR 2022** paper titled [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em>
+At that time, there was not DOI or Bibtex available in the README to allow citing, so, the authors cited the repo's link. 
+I just made a DOI for this project using Zenodo and I'm adding it to the README now! 
+
+[![DOI](https://zenodo.org/badge/355516226.svg)](https://zenodo.org/badge/latestdoi/355516226)
+
+```bibtex
+@misc{msh2021simpleclip,
+  author = {M. Moein Shariatnia},
+  title = {Simple OpenAI CLIP},
+  year = {2021},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  doi = {10.5281/zenodo.6845731},
+  howpublished = {\url{https://github.com/moein-shariatnia/OpenAI-CLIP}}
+}
+```
+
+
 ## Introduction
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hYHb0FTdKQCXZs3qCwVZnSuVGrZU2Z1w?usp=sharing)
