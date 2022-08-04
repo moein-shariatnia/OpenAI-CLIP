@@ -1,17 +1,19 @@
 ## Update (July 2022)
-I am happy to find out that this code has been used and cited in the **ICLR 2022** paper titled [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em>
-At that time, there was not DOI or Bibtex available in the README to allow citing, so, the authors cited the repo's link. 
-I just made a DOI for this project using Zenodo and I'm adding it to the README now! 
+I am happy to find out that this code has been used and cited in the following papers:
+- [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em> at **ICLR 2022** 
+- [UIC-NLP at SemEval-2022 Task 5: Exploring Contrastive Learning for Multimodal Detection of Misogynistic Memes](https://aclanthology.org/2022.semeval-1.109.pdf) by <em>Cuervo et. al.</em> at **SemEval-2022**
+
+At that time, there was no DOI or Bibtex available in the README to allow citation, so, the authors cited the repo's link.
+You can also find the citation info on the right section of this GitHub repo page named: Cite this repository.
 
 [![DOI](https://zenodo.org/badge/355516226.svg)](https://zenodo.org/badge/latestdoi/355516226)
 
 ```bibtex
-@software{
-Shariatnia_Simple_Implementation_of_2021,
+@software{Shariatnia_Simple_CLIP_2021,
 author = {Shariatnia, M. Moein},
 doi = {10.5281/zenodo.6845731},
 month = {4},
-title = {{Simple Implementation of OpenAI CLIP}},
+title = {{Simple CLIP}},
 version = {1.0.0},
 year = {2021}
 }
@@ -23,8 +25,6 @@ year = {2021}
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hYHb0FTdKQCXZs3qCwVZnSuVGrZU2Z1w?usp=sharing)
 
 It was in January of 2021 that **OpenAI** announced two new models: **DALL-E** and **CLIP**, both **multi-modality** models connecting **texts and images** in some way. In this article we are going to implement CLIP model from scratch in **PyTorch**. OpenAI has open-sourced some of the code relating to CLIP model but I found it intimidating and it was far from something short and simple. I also came across a good tutorial inspired by CLIP model on Keras code examples and I translated some parts of it into PyTorch to build this tutorial totally with our beloved PyTorch!
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hYHb0FTdKQCXZs3qCwVZnSuVGrZU2Z1w?usp=sharing)
 
 ### What does CLIP do? Why is it fun?
 
