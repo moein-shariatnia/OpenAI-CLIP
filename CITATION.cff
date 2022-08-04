@@ -1,0 +1,9 @@
+cff-version: 1.0.0
+message: If you use this software, please cite it as below.
+authors:
+  - family-names: Shariatnia
+    given-names: M. Moein
+title: Simple Implementation of OpenAI CLIP
+version: 1.0.0
+doi: 10.5281/zenodo.6845731
+date-released: 2021-04-07
