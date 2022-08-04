@@ -6,14 +6,14 @@ I just made a DOI for this project using Zenodo and I'm adding it to the README 
 [![DOI](https://zenodo.org/badge/355516226.svg)](https://zenodo.org/badge/latestdoi/355516226)
 
 ```bibtex
-@misc{msh2021simpleclip,
-  author = {M. Moein Shariatnia},
-  title = {Simple OpenAI CLIP},
-  year = {2021},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  doi = {10.5281/zenodo.6845731},
-  howpublished = {\url{https://github.com/moein-shariatnia/OpenAI-CLIP}}
+@software{
+Shariatnia_Simple_Implementation_of_2021,
+author = {Shariatnia, M. Moein},
+doi = {10.5281/zenodo.6845731},
+month = {4},
+title = {{Simple Implementation of OpenAI CLIP}},
+version = {1.0.0},
+year = {2021}
 }
 ```
 
