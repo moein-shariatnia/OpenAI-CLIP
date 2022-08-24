@@ -1,10 +1,13 @@
-## Update (July 2022)
+## Update (August 2022)
 I am happy to find out that this code has been used and cited in the following papers:
-- [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em> at **ICLR 2022** 
-- [UIC-NLP at SemEval-2022 Task 5: Exploring Contrastive Learning for Multimodal Detection of Misogynistic Memes](https://aclanthology.org/2022.semeval-1.109.pdf) by <em>Cuervo et. al.</em> at **SemEval-2022**
+1. [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em> at **ICLR 2022** 
 
-At that time, there was no DOI or Bibtex available in the README to allow citation, so, the authors cited the repo's link.
-You can also find the citation info on the right section of this GitHub repo page named: Cite this repository.
+2. [GSCLIP : A Framework for Explaining Distribution Shifts in Natural Language
+](https://arxiv.org/abs/2206.15007)by <em>Zhu et. al.</em> at **ICML 2022**
+
+3. [UIC-NLP at SemEval-2022 Task 5: Exploring Contrastive Learning for Multimodal Detection of Misogynistic Memes](https://aclanthology.org/2022.semeval-1.109.pdf) by <em>Cuervo et. al.</em> at **SemEval-2022**
+
+You can find the citation info on the right section of this GitHub repo page named: Cite this repository or use the below citation info.
 
 [![DOI](https://zenodo.org/badge/355516226.svg)](https://zenodo.org/badge/latestdoi/355516226)
 
