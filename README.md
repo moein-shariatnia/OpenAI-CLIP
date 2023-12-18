@@ -1,11 +1,17 @@
 ## Update (August 2022)
+
 I am happy to find out that this code has been used and cited in the following papers:
-1. [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em> at **ICLR 2022** 
+
+1. [Domino: Discovering Systematic Errors with Cross-Modal Embeddings](https://arxiv.org/abs/2203.14960) by <em>Eyuboglu et. al.</em> at **ICLR 2022**
 
 2. [GSCLIP : A Framework for Explaining Distribution Shifts in Natural Language
-](https://arxiv.org/abs/2206.15007)by <em>Zhu et. al.</em> at **ICML 2022**
+   ](https://arxiv.org/abs/2206.15007)by <em>Zhu et. al.</em> at **ICML 2022**
 
 3. [UIC-NLP at SemEval-2022 Task 5: Exploring Contrastive Learning for Multimodal Detection of Misogynistic Memes](https://aclanthology.org/2022.semeval-1.109.pdf) by <em>Cuervo et. al.</em> at **SemEval-2022**
+
+4. [cdsBERT - Extending Protein Language Models with Codon Awareness](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10516008/) by <em>Hallee et. al.</em> from University of Delaware (Sep 2023)
+
+5. [ENIGMA-51: Towards a Fine-Grained Understanding of Human-Object Interactions in Industrial Scenarios](https://arxiv.org/abs/2309.14809v2) by <em>Ragusa et. al.</em> (Nov 2023)
 
 You can find the citation info on the right section of this GitHub repo page named: Cite this repository or use the below citation info.
 
@@ -21,7 +27,6 @@ version = {1.0.0},
 year = {2021}
 }
 ```
-
 
 ## Introduction
 
@@ -42,12 +47,10 @@ Let's see some more outputs:
 
 ![](./images/dogs.png)
 
-
 ```python
 # !pip install timm
 # !pip install transformers
 ```
-
 
 ```python
 import os
@@ -68,8 +71,7 @@ from transformers import DistilBertModel, DistilBertConfig, DistilBertTokenizer
 
 ## Config
 
-*A note on config and CFG: I wrote the codes with python scripts and then converted it into a Jupyter Notebook. So, in case of python scripts, config is a normal python file where I put all the hyperparameters and in the case of Jupyter Notebook, its a class defined in the beginning of the notebook to keep all the hyperparameters.*
-
+_A note on config and CFG: I wrote the codes with python scripts and then converted it into a Jupyter Notebook. So, in case of python scripts, config is a normal python file where I put all the hyperparameters and in the case of Jupyter Notebook, its a class defined in the beginning of the notebook to keep all the hyperparameters._
 
 ```python
 class CFG:
@@ -103,12 +105,11 @@ class CFG:
 
     # for projection head; used for both image and text encoders
     num_projection_layers = 1
-    projection_dim = 256 
+    projection_dim = 256
     dropout = 0.1
 ```
 
 ## Utils
-
 
 ```python
 class AvgMeter:
@@ -138,10 +139,9 @@ def get_lr(optimizer):
 
 As you can see in the tittle image of this article, we need to encode both images and their describing texts. So, the dataset needs to **return both images and texts**. Of course we are not going to feed raw text to our text encoder! We will use **DistilBERT** model (which is smaller than BERT but performs nearly as well as BERT) from **HuggingFace** library as our text encoder; so, we need to **tokenize** the sentences (captions) with DistilBERT tokenizer and then feed the token ids (input_ids) and the attention masks to DistilBERT. Therefore, the dataset needs to take care of the tokenization as well. Below you can see the dataset's code. Below that I'll explain the most important things that is happening in the code.
 
-In the **\_\_init\_\_** we receive a tokenizer object which is actually a HuggingFace tokinzer; this tokenizer will be loaded when running the model. We are padding and truncating the captions to a specified max_length. In the **\_\_getitem\_\_** we will first load an encoded caption which is a dictionary with keys input_ids and attention_mask, make tensors out of its values and after that we will load the corresponding image, transform and augment it (if there is any!) and then we make it a tensor and put it in the dictionary with "image" as the key. Finally we put the raw text of the caption with the key "caption" in the dictionary only for visualization purposes. 
+In the **\_\_init\_\_** we receive a tokenizer object which is actually a HuggingFace tokinzer; this tokenizer will be loaded when running the model. We are padding and truncating the captions to a specified max_length. In the **\_\_getitem\_\_** we will first load an encoded caption which is a dictionary with keys input_ids and attention_mask, make tensors out of its values and after that we will load the corresponding image, transform and augment it (if there is any!) and then we make it a tensor and put it in the dictionary with "image" as the key. Finally we put the raw text of the caption with the key "caption" in the dictionary only for visualization purposes.
 
 I did not use additional data augmentations but you can add them if you want to improve the model's performance.
-
 
 ```python
 class CLIPDataset(torch.utils.data.Dataset):
@@ -149,7 +149,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         """
         image_filenames and cpations must have the same length; so, if there are
         multiple captions for each image, the image_filenames must have repetitive
-        file names 
+        file names
         """
 
         self.image_filenames = image_filenames
@@ -202,7 +202,6 @@ The image encoder code is straight forward. I'm using PyTorch Image Models libra
 
 The code encodes each image to a fixed size vector with the size of the model's output channels (in case of ResNet50 the vector size will be **2048**). This is the output after the nn.AdaptiveAvgPool2d() layer.
 
-
 ```python
 class ImageEncoder(nn.Module):
     """
@@ -229,7 +228,6 @@ As I mentioned before, I'll use DistilBERT as the text encoder. Like its bigger 
 
 In the case of DistilBERT (and also BERT) the output hidden representation for each token is a vector with size **768**. So, the whole caption will be encoded in the CLS token representation whose size is 768.
 
-
 ```python
 class TextEncoder(nn.Module):
     def __init__(self, model_name=CFG.text_encoder_model, pretrained=CFG.pretrained, trainable=CFG.trainable):
@@ -238,7 +236,7 @@ class TextEncoder(nn.Module):
             self.model = DistilBertModel.from_pretrained(model_name)
         else:
             self.model = DistilBertModel(config=DistilBertConfig())
-            
+
         for p in self.model.parameters():
             p.requires_grad = trainable
 
@@ -258,7 +256,6 @@ Now that we have encoded both our images and texts into fixed size vectors (2048
 
 "embedding_dim" is the size of the input vector (2048 for images and 768 for texts) and "projection_dim" is the the size of the output vector which will be 256 for our case. For understanding the details of this part you can refer to the CLIP paper.
 
-
 ```python
 class ProjectionHead(nn.Module):
     def __init__(
@@ -273,7 +270,7 @@ class ProjectionHead(nn.Module):
         self.fc = nn.Linear(projection_dim, projection_dim)
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(projection_dim)
-    
+
     def forward(self, x):
         projected = self.projection(x)
         x = self.gelu(projected)
@@ -299,7 +296,6 @@ I hope you are still with me! If not it's okay, just review the code and check t
 Let's consider what we hope that this model learns: **we want it to learn "similar representations (vectors)" for a given image and the caption describing it. Meaning that either we give it an image or the text describing it, we want it to produce same 256 sized vectors for both.**
 
 #### Check the cell below this code block for the continue of the explanations
-
 
 ```python
 class CLIPModel(nn.Module):
@@ -350,7 +346,6 @@ def cross_entropy(preds, targets, reduction='none'):
 
 So, in the best case scenario, text_embeddings and image_embedding matricies should be the same because they are describing similar things. Let's think now: if this happens, what would the logits matrix be like? Let's see with a simple example!
 
-
 ```python
 # A simple Example
 
@@ -365,12 +360,11 @@ So logits, in the best case, will be a matrix that if we take its softmax, will 
 
 Now that we've got our targets matrix, we will use simple cross entropy to calculate the actual loss. I've written the full matrix form of cross entropy as a function which you can see in the bottom of the code block. Okay! We are done! Wasn't it simple?! Alright, you can ignore the next paragraph but if you are curious, there is an important note in that.
 
-**Here's why I didn't use a simpler approach**: I need to admit that there's a simpler way to calculate this loss in PyTorch; by doing this: nn.CrossEntropyLoss()(logits, torch.arange(batch_size)). Why I did not use it here? For 2 reasons. 1- The dataset we are using has multiple captions for a single image; so, there is the possibility that two identical images with their similar captions exist in a batch (it is rare but it can happen). Taking the loss with this easier method will ignore this possibility and the model learns to pull apart two representations (assume them different)  that are actually the same. Obviously, we don't want this to happen so I calculated the whole target matrix in a way that takes care of these edge cases. 2- Doing it the way I did, gave me a better understanding of what is happening in this loss function; so, I thought it would give you a better intuition as well!
+**Here's why I didn't use a simpler approach**: I need to admit that there's a simpler way to calculate this loss in PyTorch; by doing this: nn.CrossEntropyLoss()(logits, torch.arange(batch_size)). Why I did not use it here? For 2 reasons. 1- The dataset we are using has multiple captions for a single image; so, there is the possibility that two identical images with their similar captions exist in a batch (it is rare but it can happen). Taking the loss with this easier method will ignore this possibility and the model learns to pull apart two representations (assume them different) that are actually the same. Obviously, we don't want this to happen so I calculated the whole target matrix in a way that takes care of these edge cases. 2- Doing it the way I did, gave me a better understanding of what is happening in this loss function; so, I thought it would give you a better intuition as well!
 
 ## Train
 
 Here are some funtions to help us load train and valid dataloaders, our model and then train and evaluate our model on those. There's not much going on here; just simple training loop and utility functions
-
 
 ```python
 def make_train_valid_dfs():
@@ -405,7 +399,6 @@ def build_loaders(dataframe, tokenizer, mode):
 ```
 
 Here's a handy function to train our model. There's not much happening here; just loading the batches, feeding them to the model and stepping the optimizer and lr_scheduler.
-
 
 ```python
 def train_epoch(model, train_loader, optimizer, lr_scheduler, step):
@@ -471,17 +464,16 @@ def main():
         model.eval()
         with torch.no_grad():
             valid_loss = valid_epoch(model, valid_loader)
-        
+
         if valid_loss.avg < best_loss:
             best_loss = valid_loss.avg
             torch.save(model.state_dict(), "best.pt")
             print("Saved Best Model!")
-        
+
         lr_scheduler.step(valid_loss.avg)
 ```
 
 Running the next cell start training the model. Put the kernel on GPU mode. Every epoch should take about 24 minutes on GPU (even one epoch is enough!). It can take one minute before training actually starts because we are going to encode all the captions once in the train and valid dataset, so please don't stop it! Every thing is working fine.
-
 
 ```python
 main()
@@ -495,16 +487,15 @@ Okay! We are done with training the model. Now, we need to do inference which in
 
 In this function, we are loading the model that we saved after training, feeding it images in validation set and returning the image_embeddings with shape (valid_set_size, 256) and the model itself.
 
-
 ```python
 def get_image_embeddings(valid_df, model_path):
     tokenizer = DistilBertTokenizer.from_pretrained(CFG.text_tokenizer)
     valid_loader = build_loaders(valid_df, tokenizer, mode="valid")
-    
+
     model = CLIPModel().to(CFG.device)
     model.load_state_dict(torch.load(model_path, map_location=CFG.device))
     model.eval()
-    
+
     valid_image_embeddings = []
     with torch.no_grad():
         for batch in tqdm(valid_loader):
@@ -514,7 +505,6 @@ def get_image_embeddings(valid_df, model_path):
     return model, torch.cat(valid_image_embeddings)
 ```
 
-
 ```python
 _, valid_df = make_train_valid_dfs()
 model, image_embeddings = get_image_embeddings(valid_df, "best.pt")
@@ -523,7 +513,6 @@ model, image_embeddings = get_image_embeddings(valid_df, "best.pt")
 ### Finding Matches
 
 This function does the final task that we wished our model would be capable of: it gets the model, image_embeddings, and a text query. It will display the most relevant images from the validation set! Isn't it amazing? Let's see how it performs after all!
-
 
 ```python
 def find_matches(model, image_embeddings, query, image_filenames, n=9):
@@ -538,29 +527,28 @@ def find_matches(model, image_embeddings, query, image_filenames, n=9):
             input_ids=batch["input_ids"], attention_mask=batch["attention_mask"]
         )
         text_embeddings = model.text_projection(text_features)
-    
+
     image_embeddings_n = F.normalize(image_embeddings, p=2, dim=-1)
     text_embeddings_n = F.normalize(text_embeddings, p=2, dim=-1)
     dot_similarity = text_embeddings_n @ image_embeddings_n.T
-    
+
     values, indices = torch.topk(dot_similarity.squeeze(0), n * 5)
     matches = [image_filenames[idx] for idx in indices[::5]]
-    
+
     _, axes = plt.subplots(3, 3, figsize=(10, 10))
     for match, ax in zip(matches, axes.flatten()):
         image = cv2.imread(f"{CFG.image_path}/{match}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         ax.imshow(image)
         ax.axis("off")
-    
+
     plt.show()
 ```
 
 This is how we use this function. Aaaannnndddd the results:
 
-
 ```python
-find_matches(model, 
+find_matches(model,
              image_embeddings,
              query="a group of people dancing in a party",
              image_filenames=valid_df['image'].values,
