@@ -61,10 +61,10 @@ class ProjectionHead(nn.Module):
     
     def forward(self, x):
         projected = self.projection(x)
+        x = self.layer_norm(x)
         x = self.gelu(projected)
         x = self.fc(x)
         x = self.dropout(x)
         x = x + projected
-        x = self.layer_norm(x)
         return x
 

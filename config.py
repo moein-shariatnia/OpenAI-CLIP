@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 debug = True
 image_path = "C:/Moein/AI/Datasets/Flicker-8k/Images"
@@ -21,7 +22,7 @@ max_length = 200
 
 pretrained = False # for both image encoder and text encoder
 trainable = False # for both image encoder and text encoder
-temperature = 1.0
+temperature = np.log(1/0.07)
 
 # image size
 size = 224

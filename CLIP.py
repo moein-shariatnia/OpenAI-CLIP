@@ -18,7 +18,7 @@ class CLIPModel(nn.Module):
         self.text_encoder = TextEncoder()
         self.image_projection = ProjectionHead(embedding_dim=image_embedding)
         self.text_projection = ProjectionHead(embedding_dim=text_embedding)
-        self.temperature = temperature
+        self.temperature = nn.Parameter(torch.ones([]) * temperature)
 
     def forward(self, batch):
         # Getting Image and Text Features
@@ -29,14 +29,16 @@ class CLIPModel(nn.Module):
         # Getting Image and Text Embeddings (with same dimension)
         image_embeddings = self.image_projection(image_features)
         text_embeddings = self.text_projection(text_features)
+        image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
+        text_embeddings  = text_embeddings / text_embeddings.norm(dim=1, keepdim=True)
 
         # Calculating the Loss
-        logits = (text_embeddings @ image_embeddings.T) / self.temperature
+        t = torch.clamp(self.temperature.exp(), max=100)
+        logits = (text_embeddings @ image_embeddings.T) * t
         images_similarity = image_embeddings @ image_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
-        targets = F.softmax(
-            (images_similarity + texts_similarity) / 2 * self.temperature, dim=-1
-        )
+        targets = (images_similarity + texts_similarity) / 2 * t
+        
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
         loss =  (images_loss + texts_loss) / 2.0 # shape: (batch_size)
@@ -45,6 +47,7 @@ class CLIPModel(nn.Module):
 
 def cross_entropy(preds, targets, reduction='none'):
     log_softmax = nn.LogSoftmax(dim=-1)
+    targets = F.softmax(targets, dim=-1)
     loss = (-targets * log_softmax(preds)).sum(1)
     if reduction == "none":
         return loss
