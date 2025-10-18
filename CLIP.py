@@ -30,16 +30,22 @@ class CLIPModel(nn.Module):
         image_embeddings = self.image_projection(image_features)
         text_embeddings = self.text_projection(text_features)
 
-        # Calculating the Loss
+        # Normalize embeddings to match cosine similarity objective
+        image_embeddings = F.normalize(image_embeddings, p=2, dim=-1)
+        text_embeddings = F.normalize(text_embeddings, p=2, dim=-1)
+
         logits = (text_embeddings @ image_embeddings.T) / self.temperature
-        images_similarity = image_embeddings @ image_embeddings.T
-        texts_similarity = text_embeddings @ text_embeddings.T
-        targets = F.softmax(
-            (images_similarity + texts_similarity) / 2 * self.temperature, dim=-1
-        )
+
+        ids = batch["id"]
+        if ids.ndim > 1:
+            ids = ids.view(ids.size(0))
+        positive_mask = ids.unsqueeze(1) == ids.unsqueeze(0)
+        positive_counts = positive_mask.sum(dim=-1, keepdim=True)
+        targets = positive_mask.float() / positive_counts.clamp_min(1.0)
+
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
-        loss =  (images_loss + texts_loss) / 2.0 # shape: (batch_size)
+        loss = (images_loss + texts_loss) / 2.0
         return loss.mean()
 
 
