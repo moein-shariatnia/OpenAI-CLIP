@@ -1,3 +1,20 @@
+## Update (October 2025)
+### Community feedback and fixes
+
+Thanks to everyone who has used this project and taken the time to report issues. A few recurring comments helped uncover problems in the original training loop:
+
+- **Targets leaked from the model outputs.** We were previously building the contrastive targets by softmaxing the image/text similarity matrices that came from the projections. As several people pointed out, this lets the model steer the targets during training and leads to trivial collapse (all ones).
+- **Missing cosine normalization.** Without L2-normalizing the image and text embeddings, the dot product logits are unbounded and do not match the cosine-similarity objective described in the CLIP paper.
+- **Contrastive pairs for duplicate captions.** The real dataset has multiple captions per image. Using the original softmax target matrix (or a single `arange` target) fails to mark all captions of the same image as positives.
+
+To address these, the repo now:
+
+1. Normalizes both image and text projections before computing logits so we work with cosine similarities.
+2. Builds symmetric cross-entropy targets from the sample `id` column supplied with every batch. All samples sharing an `id` are treated as positives, and the same mask is used for the text-to-image and image-to-text directions.
+3. Updates the dataset, dataloaders, scripts, and notebook so that each batch item carries its `id`, preventing the model from inventing its own targets.
+
+The result is a faithful replica of the paper's contrastive loss that remains stable even with multiple captions per image. You can find the updated logic in `CLIP.py`, `dataset.py`, `main.py`, and the accompanying notebook. Let me know if you spot anything else—community feedback has been invaluable for keeping this repo healthy.
+
 ## Update (December 2023)
 
 I am happy to find out that this code has been used and cited in the following papers:
@@ -33,22 +50,6 @@ year = {2021}
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hYHb0FTdKQCXZs3qCwVZnSuVGrZU2Z1w?usp=sharing)
 
 It was in January of 2021 that **OpenAI** announced two new models: **DALL-E** and **CLIP**, both **multi-modality** models connecting **texts and images** in some way. In this article we are going to implement CLIP model from scratch in **PyTorch**. OpenAI has open-sourced some of the code relating to CLIP model but I found it intimidating and it was far from something short and simple. I also came across a good tutorial inspired by CLIP model on Keras code examples and I translated some parts of it into PyTorch to build this tutorial totally with our beloved PyTorch!
-
-### Community feedback and fixes
-
-Thanks to everyone who has used this project and taken the time to report issues. A few recurring comments helped uncover problems in the original training loop:
-
-- **Targets leaked from the model outputs.** We were previously building the contrastive targets by softmaxing the image/text similarity matrices that came from the projections. As several people pointed out, this lets the model steer the targets during training and leads to trivial collapse (all ones).
-- **Missing cosine normalization.** Without L2-normalizing the image and text embeddings, the dot product logits are unbounded and do not match the cosine-similarity objective described in the CLIP paper.
-- **Contrastive pairs for duplicate captions.** The real dataset has multiple captions per image. Using the original softmax target matrix (or a single `arange` target) fails to mark all captions of the same image as positives.
-
-To address these, the repo now:
-
-1. Normalizes both image and text projections before computing logits so we work with cosine similarities.
-2. Builds symmetric cross-entropy targets from the sample `id` column supplied with every batch. All samples sharing an `id` are treated as positives, and the same mask is used for the text-to-image and image-to-text directions.
-3. Updates the dataset, dataloaders, scripts, and notebook so that each batch item carries its `id`, preventing the model from inventing its own targets.
-
-The result is a faithful replica of the paper's contrastive loss that remains stable even with multiple captions per image. You can find the updated logic in `CLIP.py`, `dataset.py`, `main.py`, and the accompanying notebook. Let me know if you spot anything else—community feedback has been invaluable for keeping this repo healthy.
 
 ### What does CLIP do? Why is it fun?
 
@@ -161,15 +162,16 @@ I did not use additional data augmentations but you can add them if you want to 
 
 ```python
 class CLIPDataset(torch.utils.data.Dataset):
-    def __init__(self, image_filenames, captions, tokenizer, transforms):
+    def __init__(self, image_filenames, captions, ids, tokenizer, transforms):
         """
         image_filenames and cpations must have the same length; so, if there are
         multiple captions for each image, the image_filenames must have repetitive
-        file names
+        file names 
         """
 
         self.image_filenames = image_filenames
         self.captions = list(captions)
+        self.ids = ids
         self.encoded_captions = tokenizer(
             list(captions), padding=True, truncation=True, max_length=CFG.max_length
         )
@@ -186,6 +188,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         image = self.transforms(image=image)['image']
         item['image'] = torch.tensor(image).permute(2, 0, 1).float()
         item['caption'] = self.captions[idx]
+        item['id'] = torch.tensor(self.ids[idx], dtype=torch.long)
 
         return item
 
@@ -338,16 +341,22 @@ class CLIPModel(nn.Module):
         image_embeddings = self.image_projection(image_features)
         text_embeddings = self.text_projection(text_features)
 
-        # Calculating the Loss
+        # Normalize embeddings to match cosine similarity objective
+        image_embeddings = F.normalize(image_embeddings, p=2, dim=-1)
+        text_embeddings = F.normalize(text_embeddings, p=2, dim=-1)
+
         logits = (text_embeddings @ image_embeddings.T) / self.temperature
-        images_similarity = image_embeddings @ image_embeddings.T
-        texts_similarity = text_embeddings @ text_embeddings.T
-        targets = F.softmax(
-            (images_similarity + texts_similarity) / 2 * self.temperature, dim=-1
-        )
+
+        ids = batch["id"]
+        if ids.ndim > 1:
+            ids = ids.view(ids.size(0))
+        positive_mask = ids.unsqueeze(1) == ids.unsqueeze(0)
+        positive_counts = positive_mask.sum(dim=-1, keepdim=True)
+        targets = positive_mask.float() / positive_counts.clamp_min(1.0)
+
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
-        loss =  (images_loss + texts_loss) / 2.0 # shape: (batch_size)
+        loss = (images_loss + texts_loss) / 2.0
         return loss.mean()
 
 
@@ -402,6 +411,7 @@ def build_loaders(dataframe, tokenizer, mode):
     dataset = CLIPDataset(
         dataframe["image"].values,
         dataframe["caption"].values,
+        dataframe["id"].values,
         tokenizer=tokenizer,
         transforms=transforms,
     )
