@@ -7,7 +7,7 @@ import config as CFG
 
 
 class CLIPDataset(torch.utils.data.Dataset):
-    def __init__(self, image_filenames, captions, tokenizer, transforms):
+    def __init__(self, image_filenames, captions, ids, tokenizer, transforms):
         """
         image_filenames and cpations must have the same length; so, if there are
         multiple captions for each image, the image_filenames must have repetitive
@@ -16,6 +16,7 @@ class CLIPDataset(torch.utils.data.Dataset):
 
         self.image_filenames = image_filenames
         self.captions = list(captions)
+        self.ids = ids
         self.encoded_captions = tokenizer(
             list(captions), padding=True, truncation=True, max_length=CFG.max_length
         )
@@ -32,6 +33,7 @@ class CLIPDataset(torch.utils.data.Dataset):
         image = self.transforms(image=image)['image']
         item['image'] = torch.tensor(image).permute(2, 0, 1).float()
         item['caption'] = self.captions[idx]
+        item['id'] = torch.tensor(self.ids[idx], dtype=torch.long)
 
         return item
 

@@ -34,10 +34,26 @@ year = {2021}
 
 It was in January of 2021 that **OpenAI** announced two new models: **DALL-E** and **CLIP**, both **multi-modality** models connecting **texts and images** in some way. In this article we are going to implement CLIP model from scratch in **PyTorch**. OpenAI has open-sourced some of the code relating to CLIP model but I found it intimidating and it was far from something short and simple. I also came across a good tutorial inspired by CLIP model on Keras code examples and I translated some parts of it into PyTorch to build this tutorial totally with our beloved PyTorch!
 
+### Community feedback and fixes
+
+Thanks to everyone who has used this project and taken the time to report issues. A few recurring comments helped uncover problems in the original training loop:
+
+- **Targets leaked from the model outputs.** We were previously building the contrastive targets by softmaxing the image/text similarity matrices that came from the projections. As several people pointed out, this lets the model steer the targets during training and leads to trivial collapse (all ones).
+- **Missing cosine normalization.** Without L2-normalizing the image and text embeddings, the dot product logits are unbounded and do not match the cosine-similarity objective described in the CLIP paper.
+- **Contrastive pairs for duplicate captions.** The real dataset has multiple captions per image. Using the original softmax target matrix (or a single `arange` target) fails to mark all captions of the same image as positives.
+
+To address these, the repo now:
+
+1. Normalizes both image and text projections before computing logits so we work with cosine similarities.
+2. Builds symmetric cross-entropy targets from the sample `id` column supplied with every batch. All samples sharing an `id` are treated as positives, and the same mask is used for the text-to-image and image-to-text directions.
+3. Updates the dataset, dataloaders, scripts, and notebook so that each batch item carries its `id`, preventing the model from inventing its own targets.
+
+The result is a faithful replica of the paper's contrastive loss that remains stable even with multiple captions per image. You can find the updated logic in `CLIP.py`, `dataset.py`, `main.py`, and the accompanying notebook. Let me know if you spot anything else—community feedback has been invaluable for keeping this repo healthy.
+
 ### What does CLIP do? Why is it fun?
 
 In [Learning Transferable Visual Models From Natural Language Supervision paper](https://arxiv.org/abs/2103.00020), OpenAI introduces their new model which is called **CLIP**, for **Contrastive Language-Image Pre-training**. In a nutshell, this model learns the relationship between a whole sentence and the image it describes; in a sense that when the model is trained, given an input sentence it will be able to retrieve the most related images corresponding to that sentence. The important thing here is that it is trained on full sentences instead of single classes like car, dog, etc. The intuition is that when trained on whole sentences, the model can learn a lot more things and finds some pattern between images and texts.
-They also show that when this model is trained on a huge dataset of images and their corresponding texts, it can also act as a classifier too. I encourage you to study the paper to learn more about this exciting model and their astonishing results on benchmarking datasets . To mention just one, CLIP model trained with this strategy classifies ImageNet better than those SOTA models trained on the ImageNet itself optimized for the only task of classification!
+They also show that when this model is trained on a huge dataset of images and their corresponding texts, it can also act as a classifier too. I encourage you to study the paper to learn more about this exciting model and their astonishing results on benchmarking datasets . To mention just one, CLIP model trained with this strategy classifies ImageNet better than those SOTA models trained on the ImageNet itself optimized for the only task of classification!
 
 As a **teaser** (!), let's see what the final model that we will build in this article from scratch is capable of: given a query (raw text) like "a boy jumping with skateboard" or "a girl jumping from swing", the model will retrieve the most relevant images:
 

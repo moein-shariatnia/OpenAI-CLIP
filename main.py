@@ -33,6 +33,7 @@ def build_loaders(dataframe, tokenizer, mode):
     dataset = CLIPDataset(
         dataframe["image"].values,
         dataframe["caption"].values,
+        dataframe["id"].values,
         tokenizer=tokenizer,
         transforms=transforms,
     )
